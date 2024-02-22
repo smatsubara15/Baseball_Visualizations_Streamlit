@@ -1,8 +1,11 @@
 import streamlit as st
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
 import pandas as pd
 from io import BytesIO
 import plotly.express as px
+import pybaseball as pyb
 import math
 
 # https://blog.streamlit.io/make-your-st-pyplot-interactive/
@@ -97,8 +100,48 @@ def interactive_hitter_plots(data):
         line=dict(color="RoyalBlue"),
         opacity=0.5,
     )
-    with center_column:  # This should center the plot
+    with center_column:
         st.plotly_chart(fig, use_container_width=True,width=600,height=600)
+
+# code inspiration found from pybaseballs documentation: https://github.com/jldbc/pybaseball/blob/master/pybaseball/plotting.py
+# only takes in data where ball is put inplay
+def spray_chart(inplay_data,indiv_player):
+    # pull stadium plot to overlay hits on
+    stadium_img = mpimg.imread('tigers_stadium.png')
+
+    fig, ax = plt.subplots()
+    ax.imshow(stadium_img, extent=[-300, 300, -125, 500])  # Adjust extent to fit your data scale
+
+    colorby = 'PitchCall'
+    color_label = 'PitchCall'
+    legend_title = 'PitchCall'
+    size = 60
+    
+    scatters = []
+    for color in inplay_data[color_label].unique():
+        color_sub_data = inplay_data[inplay_data[color_label] == color]
+        scatters.append(ax.scatter(
+            color_sub_data["LandingPositionX"], color_sub_data['LandingPositionY'], size, label=color, alpha=0.5
+        ))
+        if(indiv_player):
+            # Iterate over the rows of color_sub_data to annotate each point
+            for _, row in color_sub_data.iterrows():
+                ax.annotate(str(row['At_Bat_Num']),  # Convert 'at-bat' to string if it's not already
+                            (row["LandingPositionX"], row['LandingPositionY'])
+                            )
+        
+    plt.legend(handles=scatters, title=legend_title, bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    plt.draw()
+
+    plt.show()
+
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    with center_column:
+        st.image(buf, use_column_width=True)
+
+    # return base
 
 def AB_summary(data):
     st.write('\n')
@@ -157,7 +200,7 @@ st.sidebar.image(title_image_path, use_column_width=True)
 st.sidebar.title(APP_NAME)
 
 # Allow user to select which charts they want to see 
-tab_option = st.sidebar.selectbox("Choose an option", ["Pitcher Movement (Interactive)","Pitcher Movement (Static)","Hitter Plots", "Spray Chart","Team Hitting Plots"])
+tab_option = st.sidebar.selectbox("Choose an option", ["Pitcher Movement (Interactive)","Pitcher Movement (Static)","Hitter Plots","Team Hitting Plots"])
 
     
 # Display content based on the selected tab option
@@ -168,7 +211,7 @@ if tab_option == "Pitcher Movement (Interactive)":
     option = st.selectbox("Choose a Player", options=sorted(team_data.PitcherId.unique()))
 
     if option:
-        left_column, center_column, right_column = st.columns([1, 2, 1])
+        left_column, center_column, right_column = st.columns([1, 1, 1])
 
         pitcher_data = get_pitcher_data(team_data,option)
         
@@ -182,10 +225,10 @@ if tab_option == "Pitcher Movement (Static)":
     option = st.selectbox("Choose a Player", options=sorted(team_data.PitcherId.unique()))
 
     if option:
-        left_column, center_column, right_column = st.columns([1, 2, 1])
+        left_column, center_column, right_column = st.columns([1, 1, 1])
 
         pitcher_data = get_pitcher_data(team_data,option)
-        
+
         movement_plots(pitcher_data)
 
 elif tab_option == "Hitter Plots":
@@ -195,7 +238,7 @@ elif tab_option == "Hitter Plots":
 
     option = st.selectbox("Choose a Player", options=sorted(team_data.BatterId.unique()))
     if option:
-        left_column, center_column, right_column = st.columns([1, 2, 1])
+        left_column, center_column, right_column = st.columns([1, 1, 1])
         hitter_data = team_data[team_data.BatterId==option]
 
         in_play_data = hitter_data[hitter_data.PitchResult != 'Not In-Play']
@@ -210,6 +253,8 @@ elif tab_option == "Hitter Plots":
         ticker = st.sidebar.multiselect('Choose At-Bats to Display:', ABs, default=ABs)
         hitter_data = hitter_data[hitter_data.At_Bat_Num.isin(ticker)]
         interactive_hitter_plots(hitter_data)
+        spray_chart(hitter_data[((data.PitchResult != 'Walk') & (data.PitchResult != 'Not In-Play') & (data.PitchCall!='strikeout'))],1)
+
 
 elif tab_option == 'Team Hitting Plots':
     st.header("Team Hitter Plots")
