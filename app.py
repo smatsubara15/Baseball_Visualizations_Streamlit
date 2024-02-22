@@ -9,7 +9,7 @@ import pybaseball as pyb
 import math
 
 # https://blog.streamlit.io/make-your-st-pyplot-interactive/
-APP_NAME = "Tigers Questionaire"
+APP_NAME = "Tigers Questionnaire"
 
 # Page Configuration
 st.set_page_config(
@@ -258,7 +258,8 @@ elif tab_option == 'Team Hitting Plots':
         hitter_stats(in_play_data)
 
     interactive_hitter_plots(team_data)
-    spray_chart(team_data[((team_data.PitchResult != 'Walk') & (team_data.PitchResult != 'Not In-Play') & (team_data.PitchCall!='strikeout'))],0)
+    with left_column:
+        spray_chart(team_data[((team_data.PitchResult != 'Walk') & (team_data.PitchResult != 'Not In-Play') & (team_data.PitchCall!='strikeout'))],0)
 
 
 elif tab_option == "Spray Chart":
