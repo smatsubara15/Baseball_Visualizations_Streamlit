@@ -37,6 +37,7 @@ def movement_plots(data):
     ax.axhline(0, color='black', linewidth=2)
     ax.axvline(0, color='black', linewidth=2) 
 
+    # save plot as png before displaying it as an image
     buf = BytesIO()
     plt.savefig(buf, format="png")
 
@@ -50,6 +51,7 @@ def interactive_movement_plots(data):
                     hover_data=['ReleaseSpeed','PitchCall'], 
                     title='Movement Plot')
 
+    # add black x and y grid lines
     fig.add_hline(y=0, line_color='black', line_width=2)
     fig.add_vline(x=0, line_color='black', line_width=2)
 
@@ -74,12 +76,14 @@ def interactive_hitter_plots(data):
                     custom_data=['At_Bat_Num','PitchType','LaunchSpeed','LaunchAngle','PitchCall'],
                     title='Hitter Plot')
 
-    fig.add_hline(y=0, line_color='black', line_width=2)
+    # add black x and y grid lines
+    fig.add_hline(y=30.65, line_color='black', line_width=2)
     fig.add_vline(x=0, line_color='black', line_width=2)
 
     fig.update_xaxes(showgrid=True, range=[-24, 24])
     fig.update_yaxes(showgrid=True, range=[7.5, 54])
 
+    # change the format of what is displayed when hovering over datapoint
     fig.update_traces(
         hovertemplate="<br>".join([
             "At-Bat: %{customdata[0]}",
@@ -194,6 +198,8 @@ tab_option = st.sidebar.selectbox("Choose an option", ["Pitcher Movement (Intera
 # Display content based on the selected tab option
 if tab_option == "Pitcher Movement (Interactive)":
     st.header("Pitcher Movement (Interactive)")
+
+    # get team data (flag set to 0 since we want pitchers)
     team_data = get_team_df(data,0)
 
     option = st.selectbox("Choose a Player", options=sorted(team_data.PitcherId.unique()))
@@ -201,8 +207,10 @@ if tab_option == "Pitcher Movement (Interactive)":
     if option:
         left_column, center_column, right_column = st.columns([1, 1, 1])
 
+        # select pitcher and specific pitches
         pitcher_data = get_pitcher_data(team_data,option)
         
+        # plot movement plot
         interactive_movement_plots(pitcher_data)
 
 if tab_option == "Pitcher Movement (Static)":
@@ -215,8 +223,10 @@ if tab_option == "Pitcher Movement (Static)":
     if option:
         left_column, center_column, right_column = st.columns([1, 1, 1])
 
+        # select pitcher and specific pitches
         pitcher_data = get_pitcher_data(team_data,option)
 
+        # plot movement plot
         movement_plots(pitcher_data)
 
 elif tab_option == "Hitter Plots":
@@ -227,10 +237,12 @@ elif tab_option == "Hitter Plots":
     option = st.selectbox("Choose a Player", options=sorted(team_data.BatterId.unique()))
     if option:
         left_column, center_column, right_column = st.columns([1, 1, 1])
-        hitter_data = team_data[team_data.BatterId==option]
 
+        # get dataframe for specific hitter
+        hitter_data = team_data[team_data.BatterId==option]
         in_play_data = hitter_data[hitter_data.PitchResult != 'Not In-Play']
 
+        # put at-bat summary in the left column and game statisitcs in the right column
         with left_column:
             AB_summary(in_play_data)
 
@@ -241,6 +253,8 @@ elif tab_option == "Hitter Plots":
         ABs = sorted(hitter_data.At_Bat_Num.unique())
         ticker = st.sidebar.multiselect('Choose At-Bats to Display:', ABs, default=ABs)
         hitter_data = hitter_data[hitter_data.At_Bat_Num.isin(ticker)]
+
+        # plot hitter plot and spray chart
         interactive_hitter_plots(hitter_data)
         spray_chart(hitter_data[((hitter_data.PitchResult != 'Walk') & (hitter_data.PitchResult != 'Not In-Play') & (hitter_data.PitchCall!='strikeout'))],1)
 
