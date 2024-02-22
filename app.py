@@ -18,13 +18,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# plot pitch movement plots using matplotlib
 def movement_plots(data):
-
-    # Plotting
     fig, ax = plt.subplots(figsize=(5, 5))
 
-    
-    # Plotting pitches by outcome
     for outcome, df_group in data.groupby('PitchType'):
         ax.scatter(df_group['HorzBreak'], df_group['InducedVerticalBreak'], label=outcome)
 
@@ -35,53 +32,51 @@ def movement_plots(data):
     ax.set_title('Movement Plot')
     ax.legend()
     plt.grid(True)
-    ax.axhline(0, color='black', linewidth=2)  # Horizontal line
-    ax.axvline(0, color='black', linewidth=2)  # Vertical line
+
+    # add black x and y grid lines
+    ax.axhline(0, color='black', linewidth=2)
+    ax.axvline(0, color='black', linewidth=2) 
 
     buf = BytesIO()
     plt.savefig(buf, format="png")
 
-    with center_column:  # This should center the plot
+    with center_column: 
         st.image(buf, use_column_width=True)
 
+# Plot an interactive plot using Plotly
 def interactive_movement_plots(data):
-    # Create an interactive plot with Plotly
     fig = px.scatter(data, x='HorzBreak', y='InducedVerticalBreak',
                     color='PitchType',  
-                    hover_data=['ReleaseSpeed','PitchCall'],  # Display PitchSpeed on hover
+                    hover_data=['ReleaseSpeed','PitchCall'], 
                     title='Movement Plot')
 
-    # Add lines at x=0 and y=0
     fig.add_hline(y=0, line_color='black', line_width=2)
     fig.add_vline(x=0, line_color='black', line_width=2)
 
-    # Set axis limits
+    # change display so that the x and y ranges are equal
     fig.update_xaxes(showgrid=True, range=[-30, 30])
     fig.update_yaxes(showgrid=True, range=[-30, 30])
 
-    with center_column:  # This should center the plot
+    with center_column: 
         st.plotly_chart(fig, use_container_width=True,width=600,height=600)
 
     
 def interactive_hitter_plots(data):
 
-    # Bounds found here https://www.baseballprospectus.com/news/article/40891/prospectus-feature-the-universal-strike-zone/
+    # Bounds for strikezone found here https://www.baseballprospectus.com/news/article/40891/prospectus-feature-the-universal-strike-zone/
     leftBound = -8.5
     rightBound = 8.5
     lowerBound = 19.5
     upperBound = 41.8
 
-    # Create an interactive plot with Plotly
     fig = px.scatter(data, x='PlateX', y='PlateZ',
                     color='LaunchSpeed',  
-                    custom_data=['At_Bat_Num','PitchType','LaunchSpeed','LaunchAngle','PitchCall'],  # Display PitchSpeed on hover
+                    custom_data=['At_Bat_Num','PitchType','LaunchSpeed','LaunchAngle','PitchCall'],
                     title='Hitter Plot')
 
-    # Add lines at x=0 and y=0
     fig.add_hline(y=0, line_color='black', line_width=2)
     fig.add_vline(x=0, line_color='black', line_width=2)
 
-    # Set axis limits
     fig.update_xaxes(showgrid=True, range=[-24, 24])
     fig.update_yaxes(showgrid=True, range=[7.5, 54])
 
@@ -93,8 +88,9 @@ def interactive_hitter_plots(data):
             "Launch Angle: %{customdata[3]} degrees",
             "Result: %{customdata[4]}",        
         ])
-    )      
-    # Add shape
+    )     
+
+    # add strike zone box
     fig.add_shape(type="rect",
         x0=leftBound, y0=lowerBound, x1=rightBound, y1=upperBound,
         line=dict(color="RoyalBlue"),
@@ -110,7 +106,7 @@ def spray_chart(inplay_data,indiv_player):
     stadium_img = mpimg.imread('tigers_stadium.png')
 
     fig, ax = plt.subplots()
-    ax.imshow(stadium_img, extent=[-300, 300, -125, 500])  # Adjust extent to fit your data scale
+    ax.imshow(stadium_img, extent=[-300, 300, -125, 500])
 
     colorby = 'PitchCall'
     color_label = 'PitchCall'
@@ -137,21 +133,21 @@ def spray_chart(inplay_data,indiv_player):
     with center_column:
         st.image(buf, use_column_width=True)
 
-    # return base
-
+# get summary of each of hitters at-bats
 def AB_summary(data):
     st.write('\n')
     st.markdown("<h3 style='text-decoration: underline;'>At-Bat Results</h3>", unsafe_allow_html=True)
     for i in range(len(data)):
         st.write(f'AB {i+1} Result: {list(data.PitchCall)[i]}')
 
+# get Batting average, slugging percentage, and on baseb percentage for each player
 def hitter_stats(data):
     st.markdown("<h3 style='text-decoration: underline;'>Hitter Stats</h3>", unsafe_allow_html=True)
     in_play_results = list(data.PitchResult)
     
     num_PA = len(data)
-
     num_AB = num_PA - in_play_results.count("Walk")
+
     BA = in_play_results.count("Hit") / num_AB
     SLG = sum(data.slg) / num_AB
     OBP = (in_play_results.count("Hit") + in_play_results.count("Walk")) / num_PA
@@ -160,7 +156,8 @@ def hitter_stats(data):
     st.write(f'Slugging Percentage: {SLG: .3f}')
     st.write(f'On Base Percentage: {OBP: .3f}')
 
-# if hitter 
+# get dataframe for either the home team or away team
+# if hitter, make hitter_flag 1
 def get_team_df(data,hitter_flag):
     home_away = st.sidebar.selectbox("Home or Away Team:", ["Home","Away"])
     if(home_away=='Away'):
@@ -173,6 +170,7 @@ def get_team_df(data,hitter_flag):
     else:
         return data[~mask]
 
+# get data for specific pitcher and get specific pitches to display on their plot
 def get_pitcher_data(data,option):
     pitcher_data = data[data.PitcherId==option]
     pitches_counts = pitcher_data.PitchType.value_counts()
@@ -183,8 +181,7 @@ def get_pitcher_data(data,option):
     return pitcher_data[pitcher_data.PitchType.isin(ticker)]
 
 data = pd.read_csv('data_new.csv')
-
-title_image_path = 'Tigers_Logo.jpeg'  # Replace with the actual path
+title_image_path = 'Tigers_Logo.jpeg'
 
 # Include image and app name on the left sidebar
 st.sidebar.image(title_image_path, use_column_width=True)
@@ -240,6 +237,7 @@ elif tab_option == "Hitter Plots":
         with right_column:
             hitter_stats(in_play_data)
 
+        # allow user to select which at-bats to see
         ABs = sorted(hitter_data.At_Bat_Num.unique())
         ticker = st.sidebar.multiselect('Choose At-Bats to Display:', ABs, default=ABs)
         hitter_data = hitter_data[hitter_data.At_Bat_Num.isin(ticker)]
@@ -260,16 +258,3 @@ elif tab_option == 'Team Hitting Plots':
     interactive_hitter_plots(team_data)
     with left_column:
         spray_chart(team_data[((team_data.PitchResult != 'Walk') & (team_data.PitchResult != 'Not In-Play') & (team_data.PitchCall!='strikeout'))],0)
-
-
-elif tab_option == "Spray Chart":
-    st.header("Spray Chart")
-    # Add your content or function calls for this tab
-
-
-# # Pitcher Movement Tab
-# with tab1:
-#     st.header("Pitcher Movement")
-#     option1 = st.selectbox("Choose an option", options=[1, 2, 3, 4, 5], key='1')
-#     if st.button("Display Image", key='1'):
-#         plot_image(option1)
