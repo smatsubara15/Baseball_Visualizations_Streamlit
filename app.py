@@ -1,4 +1,5 @@
 import streamlit as st
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
