@@ -130,11 +130,7 @@ def spray_chart(inplay_data,indiv_player):
                             (row["LandingPositionX"], row['LandingPositionY'])
                             )
         
-    plt.legend(handles=scatters, title=legend_title, bbox_to_anchor=(1.05, 1), loc='upper left')
-
-    plt.draw()
-
-    plt.show()
+    plt.legend(handles=scatters, title=legend_title, bbox_to_anchor=(1, 1.1), loc='upper left')
 
     buf = BytesIO()
     plt.savefig(buf, format="png")
@@ -187,11 +183,6 @@ def get_pitcher_data(data,option):
     return pitcher_data[pitcher_data.PitchType.isin(ticker)]
 
 data = pd.read_csv('data_new.csv')
-
-pitcher_dfs = []
-for pitcher in data.PitcherId.unique():
-    new_df = data[data.PitcherId==pitcher]
-    pitcher_dfs.append(new_df)
 
 title_image_path = 'Tigers_Logo.jpeg'  # Replace with the actual path
 
@@ -253,20 +244,22 @@ elif tab_option == "Hitter Plots":
         ticker = st.sidebar.multiselect('Choose At-Bats to Display:', ABs, default=ABs)
         hitter_data = hitter_data[hitter_data.At_Bat_Num.isin(ticker)]
         interactive_hitter_plots(hitter_data)
-        spray_chart(hitter_data[((data.PitchResult != 'Walk') & (data.PitchResult != 'Not In-Play') & (data.PitchCall!='strikeout'))],1)
+        spray_chart(hitter_data[((hitter_data.PitchResult != 'Walk') & (hitter_data.PitchResult != 'Not In-Play') & (hitter_data.PitchCall!='strikeout'))],1)
 
 
 elif tab_option == 'Team Hitting Plots':
     st.header("Team Hitter Plots")
     team_data = get_team_df(data,1)
 
-    left_column, center_column, right_column = st.columns([1, 2, 1])
+    left_column, center_column, right_column = st.columns([1, 1, 1])
     in_play_data = team_data[team_data.PitchResult != 'Not In-Play']
 
     with right_column:
         hitter_stats(in_play_data)
 
     interactive_hitter_plots(team_data)
+    spray_chart(team_data[((team_data.PitchResult != 'Walk') & (team_data.PitchResult != 'Not In-Play') & (team_data.PitchCall!='strikeout'))],0)
+
 
 elif tab_option == "Spray Chart":
     st.header("Spray Chart")
