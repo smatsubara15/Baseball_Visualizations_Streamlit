@@ -1,8 +1,5 @@
 streamlit
 pandas
-numpy
 matplotlib
 pybaseball
-io
 plotly
-math
