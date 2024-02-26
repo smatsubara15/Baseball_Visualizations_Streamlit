@@ -134,15 +134,15 @@ def spray_chart(inplay_data,indiv_player):
 
     buf = BytesIO()
     plt.savefig(buf, format="png")
-    with center_column:
-        st.image(buf, use_column_width=True)
+    # with center_column:
+    st.image(buf, use_column_width=True)
 
 # get summary of each of hitters at-bats
 def AB_summary(data):
     st.write('\n')
     st.markdown("<h3 style='text-decoration: underline;'>At-Bat Results</h3>", unsafe_allow_html=True)
     for i in range(len(data)):
-        st.write(f'AB {i+1} Result: {list(data.PitchCall)[i]} on {list(data.Balls)[i]}-{list(data.Strikes)[i]} count')
+        st.write(f'AB {i+1}: {list(data.PitchCall)[i]} on {list(data.Balls)[i]}-{list(data.Strikes)[i]} count')
 
 # get Batting average, slugging percentage, and on baseb percentage for each player
 def hitter_stats(data):
@@ -256,7 +256,8 @@ elif tab_option == "Hitter Plots":
 
         # plot hitter plot and spray chart
         interactive_hitter_plots(hitter_data)
-        spray_chart(hitter_data[((hitter_data.PitchResult != 'Walk') & (hitter_data.PitchResult != 'Not In-Play') & (hitter_data.PitchCall!='strikeout'))],1)
+        with center_column:
+            spray_chart(hitter_data[((hitter_data.PitchResult != 'Walk') & (hitter_data.PitchResult != 'Not In-Play') & (hitter_data.PitchCall!='strikeout'))],1)
 
 
 elif tab_option == 'Team Hitting Plots':
@@ -266,9 +267,15 @@ elif tab_option == 'Team Hitting Plots':
     left_column, center_column, right_column = st.columns([1, 1, 1])
     in_play_data = team_data[team_data.PitchResult != 'Not In-Play']
 
+
     with right_column:
         hitter_stats(in_play_data)
 
     interactive_hitter_plots(team_data)
     with left_column:
+        st.write('\n')
+        st.write('\n')
+        st.write('\n')
+        st.write('\n')
+
         spray_chart(team_data[((team_data.PitchResult != 'Walk') & (team_data.PitchResult != 'Not In-Play') & (team_data.PitchCall!='strikeout'))],0)
