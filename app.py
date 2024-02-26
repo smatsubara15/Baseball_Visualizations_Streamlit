@@ -142,7 +142,7 @@ def AB_summary(data):
     st.write('\n')
     st.markdown("<h3 style='text-decoration: underline;'>At-Bat Results</h3>", unsafe_allow_html=True)
     for i in range(len(data)):
-        st.write(f'AB {i+1} Result: {list(data.PitchCall)[i]}')
+        st.write(f'AB {i+1} Result: {list(data.PitchCall)[i]} on {list(data.Balls)[i]}-{list(data.Strikes)[i]} count')
 
 # get Batting average, slugging percentage, and on baseb percentage for each player
 def hitter_stats(data):
